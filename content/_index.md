@@ -1,5 +1,5 @@
 ---
-title: "latu-club"
+title: "latu.club"
 ---
 
-Welcome to latu-club.
+Welcome to latu.club.
