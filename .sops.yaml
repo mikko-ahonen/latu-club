@@ -1,0 +1,14 @@
+# SOPS encryption config for the in-repo `secrets.sops.json` store used
+# by the per-key `secret` CLI. Tells `sops` which recipients to encrypt
+# for whenever a file matches the path regex below.
+#
+# Initial state (written by `tl init`): admin recipient only — so the
+# laptop can decrypt/manage the store. When `tl project-key rotate
+# latu-club` runs on this project's node, this file is rewritten with
+# two recipients: admin + the per-project node key. Don't hand-edit; let
+# `tl` manage it.
+
+creation_rules:
+  - path_regex: \.sops\.json$
+    age: >-
+      age1q7fyu5fay869gz2mfsaczgdftz42gwr27xqafvg7hxkws9uwtuusc50vs6

@@ -1,0 +1,15 @@
+baseURL = "https://latu.club/"
+languageCode = "fi-FI"
+title = "latu-club"
+
+enableRobotsTXT = true
+
+[minify]
+  minifyOutput = true
+
+[params]
+  # Plausible analytics. `plausible_domain` must match the site registered in
+  # Plausible exactly (infra/scripts/create-plausible-site). Rendered by
+  # layouts/_default/baseof.html; unset either param to drop the script tag.
+  plausible_domain = "latu.club"
+  plausible_src = "https://p.tulisalama.com/js/script.js"

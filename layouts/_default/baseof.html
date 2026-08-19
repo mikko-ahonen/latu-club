@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="{{ .Site.Language.Lang }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ block "title" . }}{{ .Site.Title }}{{ end }}</title>
+  {{ hugo.Generator }}
+  {{- with .Site.Params.plausible_src }}
+  <script defer data-domain="{{ $.Site.Params.plausible_domain }}" src="{{ . }}"></script>
+  {{- end }}
+</head>
+<body>
+  <header>
+    <a href="{{ "/" | relURL }}">{{ .Site.Title }}</a>
+  </header>
+  <main>
+    {{ block "main" . }}{{ end }}
+  </main>
+  <footer>
+    <p>&copy; {{ now.Year }} {{ .Site.Title }}</p>
+  </footer>
+</body>
+</html>
