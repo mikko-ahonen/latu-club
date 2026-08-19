@@ -1,0 +1,6 @@
+# Telamon-generated screenrc for latu-club
+startup_message off
+autodetach on
+escape ^@@
+defscrollback 4098
+vbell off

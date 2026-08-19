@@ -1,0 +1,66 @@
+#!/bin/bash
+
+usage() {
+    echo "Usage: $0 <issue-number> --comment-file=<file> [--not-planned]" >&2
+    echo "" >&2
+    echo "Where:" >&2
+    echo "  issue-number    issue number in the issue tracking system" >&2
+    echo "  comment-file    path to the file containing the closing comment" >&2
+    echo "  --not-planned   close as 'not planned' instead of 'completed'" >&2
+    exit 1
+}
+
+if [ $# -lt 1 ]; then
+    echo "Error: Invalid number of arguments" >&2
+    usage
+fi
+
+ISSUE=$1
+shift
+
+if [ -z "${ISSUE}" ]; then
+    echo "Error: issue number is required" >&2
+    usage
+fi
+
+re='^[0-9]+$'
+if ! [[ $ISSUE =~ $re ]]; then
+    echo "Error: issue number is not a number" >&2
+    usage
+fi
+
+REASON="completed"
+COMMENT_FILE=""
+
+for i in "$@"; do
+  case $i in
+    --comment-file=*)
+      COMMENT_FILE="${i#*=}"
+      ;;
+    --not-planned)
+      REASON="not planned"
+      ;;
+    -*|--*)
+      echo "Unknown option $i" >&2
+      usage
+      ;;
+  esac
+done
+
+if [ -z "${COMMENT_FILE}" ]; then
+    echo "Error: --comment-file is required" >&2
+    usage
+fi
+
+if [ ! -f "${COMMENT_FILE}" ]; then
+    echo "Error: Comment file '${COMMENT_FILE}' does not exist" >&2
+    exit 1
+fi
+
+if [ ! -r "${COMMENT_FILE}" ]; then
+    echo "Error: Comment file '${COMMENT_FILE}' is not readable" >&2
+    exit 1
+fi
+
+TERM=dumb gh issue comment "${ISSUE}" -F "${COMMENT_FILE}"
+TERM=dumb gh issue close "${ISSUE}" --reason="${REASON}"
