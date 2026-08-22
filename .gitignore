@@ -4,3 +4,4 @@ resources/_gen/
 .env.local
 .env.claude
 !.claude
+__pycache__/

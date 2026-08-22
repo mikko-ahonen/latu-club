@@ -1,0 +1,68 @@
+name: conditions
+
+on:
+  schedule:
+    # Hourly, subject to the same caveat as check-times: GitHub's shared cron
+    # queue delays and occasionally drops scheduled runs.
+    - cron: "20 * * * *"
+  workflow_dispatch:
+    inputs:
+      backfill:
+        description: "Re-seed the history file from each source's archive"
+        type: boolean
+        default: false
+
+# contents: write commits the data back; actions: write lets us kick off the
+# Pages build afterwards.
+permissions:
+  contents: write
+  actions: write
+
+# Two runs committing to main at once would race on the push.
+concurrency:
+  group: conditions
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # python3 is preinstalled on ubuntu-latest and the script is stdlib-only,
+      # so there is nothing to set up or install.
+      - name: Fetch water and air conditions
+        run: |
+          python3 scripts/fetch_conditions.py \
+            ${{ inputs.backfill && '--backfill' || '' }}
+
+      - name: Commit when the readings changed
+        id: commit
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet -- data/conditions.json data/conditions_history.json; then
+            echo "Readings unchanged; nothing to commit."
+            echo "committed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/conditions.json data/conditions_history.json
+          git commit -m "data: update Rastila conditions [skip ci]"
+
+          # Another job may have pushed since checkout; rebase rather than fail.
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+          echo "committed=true" >> "$GITHUB_OUTPUT"
+
+      # A push made with GITHUB_TOKEN deliberately does not trigger other
+      # workflows, so the Pages build has to be asked for explicitly - without
+      # this the charts would never refresh on the deployed site.
+      - name: Rebuild the site with the new readings
+        if: steps.commit.outputs.committed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run pages.yml --ref "${GITHUB_REF_NAME}"
