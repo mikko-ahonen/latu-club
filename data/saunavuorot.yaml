@@ -1,0 +1,17 @@
+# Saunavuorot. Renderöidään layouts/index.html:ssä.
+# sauna2 / sauna1: kellonaika, tyhjä = ei vuoroa.
+- paiva: Tiistai
+  sauna2: "klo 16-19.30"
+  sauna1: ""
+- paiva: Keskiviikko
+  sauna2: "klo 16-19.30"
+  sauna1: ""
+- paiva: Torstai
+  sauna2: "klo 16-19.30"
+  sauna1: ""
+- paiva: Lauantai
+  sauna2: "klo 9-13"
+  sauna1: ""
+- paiva: Sunnuntai
+  sauna2: "klo 12.30-17.30"
+  sauna1: "klo 12.30-17.30"

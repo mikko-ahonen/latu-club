@@ -1,6 +1,33 @@
 {{ define "main" }}
   <article>
-    <h1>{{ .Title }}</h1>
+    <h1 class="h3 mb-3">{{ .Title }}</h1>
     {{ .Content }}
+
+    <h2 class="h4 mt-4 mb-3">Saunavuorot</h2>
+    <div class="table-responsive">
+      <table class="table table-striped align-middle mb-0">
+        <caption class="visually-hidden">Saunavuorot viikonpäivittäin</caption>
+        <thead>
+          <tr>
+            <th scope="col">Päivä</th>
+            <th scope="col">Sauna 2</th>
+            <th scope="col">Sauna 1</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{ range .Site.Data.saunavuorot }}
+            <tr>
+              <th scope="row" class="fw-semibold text-nowrap">{{ .paiva }}</th>
+              <td class="text-nowrap">
+                {{- with .sauna2 }}{{ . }}{{ else }}<span class="text-body-tertiary">&ndash;</span>{{ end -}}
+              </td>
+              <td class="text-nowrap">
+                {{- with .sauna1 }}{{ . }}{{ else }}<span class="text-body-tertiary">&ndash;</span>{{ end -}}
+              </td>
+            </tr>
+          {{ end }}
+        </tbody>
+      </table>
+    </div>
   </article>
 {{ end }}
