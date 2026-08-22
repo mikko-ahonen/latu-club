@@ -42,7 +42,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          if git diff --quiet -- data/conditions.json data/conditions_history.json; then
+          if git diff --quiet -- archive/conditions.csv data/conditions.json data/conditions_history.json; then
             echo "Readings unchanged; nothing to commit."
             echo "committed=false" >> "$GITHUB_OUTPUT"
             exit 0
@@ -50,7 +50,7 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/conditions.json data/conditions_history.json
+          git add archive/conditions.csv data/conditions.json data/conditions_history.json
           git commit -m "data: update Rastila conditions [skip ci]"
 
           # Another job may have pushed since checkout; rebase rather than fail.

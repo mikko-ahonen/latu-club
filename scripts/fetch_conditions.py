@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
 """Collect current conditions at Rastila beach for latu.club.
 
-Writes two files that Hugo picks up automatically as .Site.Data:
+Writes three files:
 
-  data/conditions.json          latest reading of each source
-  data/conditions_history.json  time series behind the charts on the front page
+  archive/conditions.csv        append-only record of every reading ever taken,
+                                never trimmed - the permanent history
+  data/conditions.json          latest reading of each source (Hugo .Site.Data)
+  data/conditions_history.json  current season only, for the front-page chart,
+                                regenerated from the archive on every run
+
+A season runs from 1 August to 31 July, so "fall 2026 - spring 2027" is the
+2026-2027 season. Only the season file feeds the page; the archive keeps
+everything so older seasons stay available for comparison.
 
 Water temperature is recorded from both sources on every run:
 
@@ -21,13 +28,14 @@ returns NaN for temperature.
 Only stdlib, so the job needs no pip install.
 
 Usage:
-  python3 scripts/fetch_conditions.py [--out DIR] [--history-days N]
-  python3 scripts/fetch_conditions.py --backfill    # seed history, then append
+  python3 scripts/fetch_conditions.py [--out DIR] [--archive PATH]
+  python3 scripts/fetch_conditions.py --backfill    # seed archive, then append
 
 Exits non-zero only if no source at all could be read.
 """
 
 import argparse
+import csv
 import json
 import sys
 import urllib.error
@@ -216,6 +224,76 @@ def backfill(days):
     return points
 
 
+FIELDS = ["t", "water_sensor", "water_model", "air"]
+
+
+def season_start(now):
+    """First day of the season `now` falls in.
+
+    Seasons run 1 August - 31 July, so an autumn-to-spring swimming season
+    lands in one season rather than being split across two calendar years.
+    """
+    year = now.year if now.month >= 8 else now.year - 1
+    return datetime(year, 8, 1, tzinfo=timezone.utc)
+
+
+def season_label(start):
+    return f"{start.year}-{start.year + 1}"
+
+
+def read_archive(path):
+    """Every row ever recorded, keyed by timestamp so re-runs cannot duplicate."""
+    rows = {}
+    try:
+        with path.open(encoding="utf-8", newline="") as fh:
+            for row in csv.DictReader(fh):
+                t = (row.get("t") or "").strip()
+                if not t:
+                    continue
+                point = {"t": t}
+                for key in FIELDS[1:]:
+                    raw = (row.get(key) or "").strip()
+                    try:
+                        point[key] = float(raw)
+                    except ValueError:
+                        point[key] = None
+                rows[t] = point
+    except OSError:
+        pass  # first run
+    return rows
+
+
+def write_archive(path, rows):
+    """Rewrite the archive sorted by time.
+
+    Sorted output keeps the file deterministic, so a re-run that adds nothing
+    produces no diff and the workflow skips the commit.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=FIELDS)
+        writer.writeheader()
+        for t in sorted(rows):
+            writer.writerow({k: ("" if rows[t].get(k) is None else rows[t].get(k))
+                             for k in FIELDS})
+
+
+def thin(points, limit):
+    """Even sample down to `limit` points, always keeping first and last.
+
+    A full season at hourly cadence is ~6500 points; sending all of them to the
+    browser would bloat the page for a chart only a few hundred pixels wide.
+    The archive keeps every reading regardless.
+    """
+    if limit <= 0 or len(points) <= limit:
+        return points
+    step = len(points) / limit
+    picked = [points[int(i * step)] for i in range(limit)]
+    if picked[-1] is not points[-1]:
+        picked[-1] = points[-1]
+    return picked
+
+
 def load(path, default):
     try:
         return json.loads(path.read_text(encoding="utf-8"))
@@ -227,26 +305,33 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="data", type=Path,
                     help="directory holding conditions.json and conditions_history.json")
-    ap.add_argument("--history-days", default=14, type=int,
-                    help="how much history the charts keep")
+    ap.add_argument("--archive", default=Path("archive/conditions.csv"), type=Path,
+                    help="append-only record of every reading; never trimmed")
     ap.add_argument("--backfill", action="store_true",
-                    help="seed the history file from each source's archive first")
+                    help="seed the archive from each source's own archive first")
+    ap.add_argument("--backfill-days", default=14, type=int,
+                    help="how far back --backfill reaches")
+    ap.add_argument("--chart-points", default=1200, type=int,
+                    help="cap on points written to the chart file (0 disables thinning)")
     args = ap.parse_args()
 
     args.out.mkdir(parents=True, exist_ok=True)
     current_path = args.out / "conditions.json"
     history_path = args.out / "conditions_history.json"
 
-    history = [p for p in load(history_path, []) if isinstance(p, dict) and p.get("t")]
+    archive = read_archive(args.archive)
+    print(f"Archive holds {len(archive)} readings.")
 
     if args.backfill:
         try:
-            seeded = backfill(args.history_days)
-            # Existing points win, so a backfill never overwrites a live reading.
-            merged = {p["t"]: p for p in seeded}
-            merged.update({p["t"]: p for p in history})
-            history = sorted(merged.values(), key=lambda p: p["t"])
-            print(f"Backfilled {len(seeded)} points; history now {len(history)}.")
+            seeded = backfill(args.backfill_days)
+            added = 0
+            for point in seeded:
+                # Existing rows win, so a backfill never overwrites a live reading.
+                if point["t"] not in archive:
+                    archive[point["t"]] = point
+                    added += 1
+            print(f"Backfilled {added} new points ({len(seeded)} fetched).")
         except (urllib.error.URLError, OSError, ValueError) as e:
             print(f"WARN: backfill failed: {e}", file=sys.stderr)
 
@@ -279,8 +364,10 @@ def main():
                            - results["model"]["temperature_c"], 2)
 
     now = datetime.now(timezone.utc)
+    start = season_start(now)
     current = {
         "updated_at": now.isoformat().replace("+00:00", "Z"),
+        "season": season_label(start),
         "water": {
             "preferred": preferred,
             "sensor": sensor,
@@ -290,23 +377,31 @@ def main():
         "air": results["air"] or previous.get("air"),
     }
 
-    # Only genuinely fresh values enter the series; retained ones would draw a
+    # Only genuinely fresh values enter the record; retained ones would draw a
     # flat line that looks like real data.
-    history.append({
-        "t": current["updated_at"],
+    stamp = current["updated_at"]
+    archive[stamp] = {
+        "t": stamp,
         "water_sensor": results["sensor"]["temperature_c"] if results["sensor"] else None,
         "water_model": results["model"]["temperature_c"] if results["model"] else None,
         "air": results["air"]["temperature_c"] if results["air"] else None,
-    })
-    cutoff = (now - timedelta(days=args.history_days)).isoformat().replace("+00:00", "Z")
-    history = sorted((p for p in history if p["t"] >= cutoff), key=lambda p: p["t"])
+    }
+    write_archive(args.archive, archive)
+
+    # The page shows this season only; the archive above keeps every season.
+    cutoff = start.isoformat().replace("+00:00", "Z")
+    season = sorted((row for t, row in archive.items() if t >= cutoff),
+                    key=lambda row: row["t"])
+    season = thin(season, args.chart_points)
 
     current_path.write_text(json.dumps(current, indent=2, ensure_ascii=False) + "\n",
                             encoding="utf-8")
-    history_path.write_text(json.dumps(history, ensure_ascii=False) + "\n", encoding="utf-8")
+    history_path.write_text(json.dumps(season, ensure_ascii=False) + "\n", encoding="utf-8")
 
     shown = current["water"][preferred] or {}
-    print(f"Wrote {current_path} and {history_path} ({len(history)} points)")
+    print(f"Wrote {args.archive} ({len(archive)} readings, all seasons)")
+    print(f"Wrote {current_path} and {history_path} "
+          f"(season {current['season']}, {len(season)} points)")
     print(f"  water sensor: {(sensor or {}).get('temperature_c', '?')} C")
     print(f"  water model:  {(model or {}).get('temperature_c', '?')} C")
     print(f"  preferred:    {preferred} -> {shown.get('temperature_c', '?')} C, diff {difference}")
