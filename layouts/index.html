@@ -3,7 +3,34 @@
     <h1 class="h3 mb-3">{{ .Title }}</h1>
     {{ .Content }}
 
-    <h2 class="h4 mt-4 mb-3">Saunavuorot</h2>
+    <h2 class="h4 mt-4 mb-2">Talviuinti ja sauna kertamaksulla</h2>
+    <p class="mb-3">Helsingin Latu ja Polku järjestää kaikille avointa, kertamaksullista
+      talviuintia sunnuntai-iltapäivisin. Kertamaksulla pääsee saunaan ja avantoon.</p>
+    <div class="card">
+      <div class="card-body py-2">
+        <dl class="row mb-0 small">
+          <dt class="col-sm-4 py-1 fw-semibold">Lipunmyynti</dt>
+          <dd class="col-sm-8 py-1 mb-0">sunnuntaisin klo 12.30-14.30</dd>
+
+          <dt class="col-sm-4 py-1 fw-semibold">Uinti ja saunominen</dt>
+          <dd class="col-sm-8 py-1 mb-0">klo 16 saakka</dd>
+
+          <dt class="col-sm-4 py-1 fw-semibold">Hinta</dt>
+          <dd class="col-sm-8 py-1 mb-0">10 € / kerta</dd>
+
+          <dt class="col-sm-4 py-1 fw-semibold">Paikka</dt>
+          <dd class="col-sm-8 py-1 mb-0">Rastilan leirintäalueen rantasauna</dd>
+
+          <dt class="col-sm-4 py-1 fw-semibold">Maksutavat</dt>
+          <dd class="col-sm-8 py-1 mb-0">korttimaksu tai MobilePay</dd>
+
+          <dt class="col-sm-4 py-1 fw-semibold">Huomioi</dt>
+          <dd class="col-sm-8 py-1 mb-0">sekavuorot, saunassa käytetään uimapukua</dd>
+        </dl>
+      </div>
+    </div>
+
+    <h2 class="h4 mt-5 mb-3">Talviuinti saunasta</h2>
     <div class="table-responsive">
       <table class="table table-striped align-middle mb-0">
         <caption class="visually-hidden">Saunavuorot viikonpäivittäin</caption>
@@ -19,15 +46,24 @@
             <tr>
               <th scope="row" class="fw-semibold text-nowrap">{{ .paiva }}</th>
               <td class="text-nowrap">
-                {{- with .sauna2 }}{{ . }}{{ else }}<span class="text-body-tertiary">&ndash;</span>{{ end -}}
+                {{- with .sauna2 }}{{ . }}{{ else }}<span class="text-body-tertiary">-</span>{{ end -}}
               </td>
               <td class="text-nowrap">
-                {{- with .sauna1 }}{{ . }}{{ else }}<span class="text-body-tertiary">&ndash;</span>{{ end -}}
+                {{- with .sauna1 }}{{ . }}{{ else }}<span class="text-body-tertiary">-</span>{{ end -}}
               </td>
             </tr>
           {{ end }}
         </tbody>
       </table>
     </div>
+    <p class="mt-3 mb-0">
+      <a class="btn btn-primary" href="https://ssl.eventilla.com/event/AJ5PA">Ilmoittaudu</a>
+    </p>
+
+    <h2 class="h4 mt-5 mb-3">Talviuinti kontista</h2>
+    <p class="mb-0">Avoinna joka päivä klo 5-22.</p>
+    <p class="mt-3 mb-0">
+      <a class="btn btn-primary" href="https://ssl.eventilla.com/event/VPM5X">Ilmoittaudu</a>
+    </p>
   </article>
 {{ end }}

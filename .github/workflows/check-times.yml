@@ -1,0 +1,87 @@
+name: check-times
+
+on:
+  schedule:
+    # Hourly. GitHub's shared cron queue routinely delays these runs by
+    # 10-30 minutes and drops them under peak load, so treat this as
+    # "roughly hourly" rather than a guarantee.
+    - cron: "0 * * * *"
+  workflow_dispatch:
+
+# Read the baselines out of the repo, and file an issue when they drift.
+permissions:
+  contents: read
+  issues: write
+
+# Never let two runs race on the dedupe check and file the same issue twice.
+concurrency:
+  group: check-times
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compare Eventilla times against baselines
+        id: check
+        run: |
+          set +e
+          scripts/check-eventilla-times.sh > /tmp/check-output.txt 2>&1
+          status=$?
+          set -e
+          cat /tmp/check-output.txt
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+      - name: File an issue when the times changed
+        if: steps.check.outputs.status == '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MARKER: "<!-- eventilla-times-monitor -->"
+        run: |
+          set -euo pipefail
+
+          # One open issue at a time: until someone updates the baselines the
+          # times stay changed, and an hourly job would otherwise file 24 a day.
+          existing="$(gh issue list --state open --search "$MARKER in:body" \
+                        --json number --jq '.[0].number // empty')"
+          if [ -n "$existing" ]; then
+            echo "Issue #$existing is already open for this drift; not filing another."
+            exit 0
+          fi
+
+          {
+            echo "$MARKER"
+            echo
+            echo "The times published on Eventilla no longer match the baselines"
+            echo "committed in \`tests/eventilla-times/\`. latu.club may now be"
+            echo "showing a stale schedule."
+            echo
+            echo '```'
+            cat /tmp/check-output.txt
+            echo '```'
+            echo
+            echo "**To resolve:**"
+            echo
+            echo "1. Check the live pages and decide which times are correct."
+            echo "2. Update \`data/saunavuorot.yaml\` (and the front page copy) if latu.club is stale."
+            echo "3. Refresh the baselines: \`scripts/check-eventilla-times.sh --update\`"
+            echo "4. Commit both, and close this issue."
+            echo
+            echo "_Filed automatically by [\`check-times\`](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})._"
+          } > /tmp/issue-body.md
+
+          # The `bug` label is this repo's convention, but don't lose the issue
+          # if the label is missing from the repo.
+          gh issue create --title "Eventilla-ajat muuttuneet: latu.club voi olla vanhentunut" \
+                          --body-file /tmp/issue-body.md --label bug \
+          || gh issue create --title "Eventilla-ajat muuttuneet: latu.club voi olla vanhentunut" \
+                             --body-file /tmp/issue-body.md
+
+      - name: Fail the run when a page could not be checked
+        if: steps.check.outputs.status == '2'
+        run: |
+          echo "::error::Could not fetch or parse an Eventilla page - see the log above."
+          exit 1
