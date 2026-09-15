@@ -84,28 +84,45 @@ RUN echo 'git config --global core.sshCommand "ssh -i /home/dev/.ssh/id_ed25519"
 # forge-generic `issues` CLI — over git+ssh from the tulisalama Gitea. The
 # compose file forwards the build key (build.ssh); see the compose template.
 #
-# Self-sufficient across base images: python-slim already has python3+pip in
-# /usr/local, debian-slim and temurin get git/ssh/python3/pip from apt first.
-# PIP_BREAK_SYSTEM_PACKAGES is for bookworm's PEP-668 guard (pip >= 23 honours
-# it, jammy's older pip ignores it); scoped to the one RUN, not the image.
+# Two legs, because base images differ in Python:
+#  * python >= 3.12 present (python:* bases): plain pip install; entry points
+#    land on the image's PATH (venv or /usr/local/bin).
+#    PIP_BREAK_SYSTEM_PACKAGES is for PEP-668 guards; older pips ignore it.
+#  * anything older (bookworm 3.11, jammy 3.10 aptts): uv with a MANAGED
+#    CPython 3.12 — brain-cli's floor is >=3.12, and jammy's pip 22 even
+#    builds PEP-621 projects as metadata-less "UNKNOWN", silently. Each tool
+#    is installed separately because uv exposes only the primary package's
+#    entry points. Tool venvs + the interpreter live under /opt so the
+#    non-root dev user can execute them (not under /root, mode 700).
 #
-# PRIVATE_CLI_BUST busts only this layer, so the @main install refreshes on
+# PRIVATE_CLI_BUST busts only this layer, so the @main installs refresh on
 # rebuild rather than caching forever; `tl build` sets it to the day's UTC
-# date. Include this at the END of a claude stage that runs as user `dev`.
+# date. Include this at the END of a claude stage whose runtime user is `dev`.
 # ------------------------------------------------------------------------------
 USER root
 ARG PRIVATE_CLI_BUST=static
 RUN --mount=type=ssh set -eux \
     && echo "private-cli cache: ${PRIVATE_CLI_BUST}" \
-    && { command -v git && command -v ssh-keyscan && python3 -m pip --version; } >/dev/null 2>&1 \
+    && { command -v git && command -v ssh-keyscan && command -v curl; } >/dev/null 2>&1 \
        || { apt-get update \
             && apt-get install --no-install-recommends -y \
-                 git openssh-client ca-certificates python3 python3-pip \
+                 git openssh-client ca-certificates curl \
             && rm -rf /var/lib/apt/lists/*; } \
     && mkdir -p /root/.ssh \
     && ssh-keyscan -p 2222 git.tulisalama.com >> /root/.ssh/known_hosts 2>/dev/null \
-    && PIP_BREAK_SYSTEM_PACKAGES=1 python3 -m pip install --no-cache-dir \
-        "git+ssh://git@git.tulisalama.com:2222/tulisalama-tools/tulisalama-tools.git@main" \
+    && if python3 -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 12) else 1)' 2>/dev/null; then \
+         PIP_BREAK_SYSTEM_PACKAGES=1 python3 -m pip install --no-cache-dir \
+             "git+ssh://git@git.tulisalama.com:2222/tulisalama-tools/tulisalama-tools.git@main"; \
+       else \
+         curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh \
+         && for repo in tulisalama-tools/tulisalama-tools secret/secret brain/brain-cli; do \
+              env UV_TOOL_DIR=/opt/uv-tools \
+                  UV_PYTHON_INSTALL_DIR=/opt/uv-python \
+                  UV_TOOL_BIN_DIR=/usr/local/bin \
+                  uv tool install --python 3.12 \
+                  "git+ssh://git@git.tulisalama.com:2222/${repo}.git@main"; \
+            done; \
+       fi \
     && printf '#!/bin/sh\n# secret finds its store relative to cwd; the project is always at /src\nexport SECRETS_FILE="${SECRETS_FILE:-/src/secrets.sops.json}"\nexec secret exec BRAIN_API_TOKEN -- brain-cli "$@"\n' \
         > /usr/local/bin/brain \
     && chmod 0755 /usr/local/bin/brain

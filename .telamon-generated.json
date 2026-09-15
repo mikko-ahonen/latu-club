@@ -12,7 +12,7 @@
   ".claude/skills/list-issues/scripts/list-issues": "83e8106d50ea6ac222f742813e0f1810d591b67ce440983928ee845df9217df2",
   ".github/workflows/pages.yml": "98ca7b378fa4315a628ce619862dc3d3cee2d87a63bd266f7264662d08be3a2e",
   "CLAUDE.md": "fa9ebfd7f3fd3604050b72c5ac460c8eab0726d3a94cc7f877884e86e9481815",
-  "Dockerfile": "9df33fe21ac0e2f8d9a731ac26f5335cd1648012112841bd70b9626c2e8b4857",
+  "Dockerfile": "25dfba4dc5ce1425e6a13f2f8095d1ce0db3d3c33eeea0b2ff55348adf15feac",
   "README.md": "2c5ed95bfab725fac47bc9d814f18300359c93b9bbad1037761f0ab09d0fd5da",
   "dev/screen-shell.sh": "03b60dd87e36f51c07bc802fbef277b62b27a15f292ad816bf7ddef7855d71b3",
   "dev/screenrc": "83b75c78aa3e9cc92bdbb2eb9ebb225536929df6ee4f979e7320708e52cc41ce",
