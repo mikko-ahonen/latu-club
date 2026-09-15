@@ -1,29 +1,6 @@
 #!/bin/bash
-
-usage() {
-    echo "Usage: $0 <issue-number>"
-    echo "" >&2
-    echo "Where:" >&2
-    echo "  issue-number    issue number in the issue tracking system" >&2
-    exit 1
-}
-
-if [ $# -ne 1 ]; then
-    echo "Error: Invalid number of arguments" >&2
-    usage
-fi
-
-ISSUE=$1
-
-if [ -z "${ISSUE}" ]; then
-    echo "Error: issue number is required" >&2
-    usage
-fi
-
-re='^[0-9]+$'
-if ! [[ $ISSUE =~ $re ]]; then
-    echo "Error: issue number is not a number" >&2
-    usage
-fi
-
-TERM=dumb gh issue view "${ISSUE}"
+# Telamon-generated shim. The real implementation is the forge-generic
+# `issues` CLI from the tulisalama-tools package (installed in every dev
+# container and dev box); it picks gh or the Gitea API from the origin
+# remote and resolves tokens from env or the project sops store.
+exec issues get-issue "$@"

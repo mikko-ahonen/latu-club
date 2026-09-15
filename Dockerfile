@@ -77,4 +77,37 @@ RUN curl -fsSL https://claude.ai/install.sh | bash \
 RUN echo 'git config --global core.sshCommand "ssh -i /home/dev/.ssh/id_ed25519"' >> "$BASH_ENV" \
     && echo 'git config --global --add safe.directory /src' >> "$BASH_ENV"
 
+# ------------------------------------------------------------------------------
+# tulisalama platform toolbelt (shared include: templates/_shared/private-cli.j2)
+#
+# Installs the tulisalama-tools meta-package — `secret`, `brain-cli` and the
+# forge-generic `issues` CLI — over git+ssh from the tulisalama Gitea. The
+# compose file forwards the build key (build.ssh); see the compose template.
+#
+# Self-sufficient across base images: python-slim already has python3+pip in
+# /usr/local, debian-slim and temurin get git/ssh/python3/pip from apt first.
+# PIP_BREAK_SYSTEM_PACKAGES is for bookworm's PEP-668 guard (pip >= 23 honours
+# it, jammy's older pip ignores it); scoped to the one RUN, not the image.
+#
+# PRIVATE_CLI_BUST busts only this layer, so the @main install refreshes on
+# rebuild rather than caching forever; `tl build` sets it to the day's UTC
+# date. Include this at the END of a claude stage that runs as user `dev`.
+# ------------------------------------------------------------------------------
+USER root
+ARG PRIVATE_CLI_BUST=static
+RUN --mount=type=ssh set -eux \
+    && echo "private-cli cache: ${PRIVATE_CLI_BUST}" \
+    && { command -v git && command -v ssh-keyscan && python3 -m pip --version; } >/dev/null 2>&1 \
+       || { apt-get update \
+            && apt-get install --no-install-recommends -y \
+                 git openssh-client ca-certificates python3 python3-pip \
+            && rm -rf /var/lib/apt/lists/*; } \
+    && mkdir -p /root/.ssh \
+    && ssh-keyscan -p 2222 git.tulisalama.com >> /root/.ssh/known_hosts 2>/dev/null \
+    && PIP_BREAK_SYSTEM_PACKAGES=1 python3 -m pip install --no-cache-dir \
+        "git+ssh://git@git.tulisalama.com:2222/tulisalama-tools/tulisalama-tools.git@main" \
+    && printf '#!/bin/sh\n# secret finds its store relative to cwd; the project is always at /src\nexport SECRETS_FILE="${SECRETS_FILE:-/src/secrets.sops.json}"\nexec secret exec BRAIN_API_TOKEN -- brain-cli "$@"\n' \
+        > /usr/local/bin/brain \
+    && chmod 0755 /usr/local/bin/brain
+USER dev
 CMD ["bash"]

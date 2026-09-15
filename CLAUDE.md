@@ -36,6 +36,31 @@ In general, we work on a specific phase at the time. Phase describes the primary
 time and we can jump back to a phase. Phase may be related to the whole project or later iteratively for a new feature we are working on 
 for existing projects.
 
+
+<!--
+Authoritative source for the `## Brain` section of a project's CLAUDE.md.
+Lives here, beside skill/SKILL.md, because this repo owns the commands the
+text teaches. telamon renders it verbatim; edit it here, not downstream.
+
+Keep it one paragraph. The full guidance is the brain skill; this is only
+enough to make an agent reach for it at the right moment.
+-->
+
+## Brain observations
+
+Send an Observation to brain when something is not yours alone: the cause or
+the effect reaches outside this repo (a shared template, library, base image,
+or service), or you learned something the code doesn't say. Normal project
+work is not an observation — a bug in this project's own code goes in a
+ticket. Record it before you understand it; it obliges nobody. Never send
+secrets, customer data, or what git already says. Use `brain observation
+record --kind=... --statement=... --entity=<id>` — the `--entity` is what
+makes it findable by component, and `brain entity list --key=<name>` finds the
+id. Observations can't be edited; supersede to correct. When you need someone
+*else* to act, that's `brain request create` instead, and `brain inbox` is
+what's outstanding on you. See the brain skill for the rest.
+
+
 The phases are:
 
 concept → design → prototype → implement → testing → userguide → e2e → landing → training
