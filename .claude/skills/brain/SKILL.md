@@ -117,6 +117,32 @@ brain change defer <id> --reason="release freeze"
 
 Applying is not brain's: the steps and probes belong to the edge tool.
 
+## Intents — turn one ask into fanned work
+
+The step before a Change or a Request exists: submit an intent and brain
+resolves it against the catalogue to the right actors, creating one member
+each — a Change apiece, or a Request apiece — grouped under a single
+**Fanout** so one approval covers them all.
+
+```bash
+# who: a deterministic selector over the catalogue --
+#   undescribed | role:<r> | responsible-for:<entity> | uses:<entity> |
+#   actors:<h,h> -- or, where the decision model is provisioned, free text
+brain intent submit --kind=change --intent="fill your actor description" \
+    --select=undescribed
+brain intent submit --kind=request --intent="which release are you on?" \
+    --select="uses:django-uikit" --request-kind=release.query
+
+brain fanout list --unauthorized             # batches still awaiting the gate
+brain fanout show <id>                        # the batch and every member
+```
+
+`--kind` may be omitted for a free-text intent: the model classifies it. A
+structured selector needs no model and always works; a free-text scope
+needs the decision model, and is refused where it is not provisioned. brain
+reasons over its own catalogue only, never your source — it creates the
+coordination objects and applies and answers nothing.
+
 ## Authorizing — a person only, and never you
 
 Nothing runs at a cost without a standing Authorization, and only a human
@@ -130,13 +156,22 @@ The commands, for when a person is at the keyboard:
 ```bash
 brain authorize <change id> --reason="worth spending on" [--batch=1]
 brain authorize <request id> --reason="cheap to check"
+brain authorize <fanout id> --reason="the sweep is worth it" [--batch=1]
 brain authorization widen  <auth id> --batch=5 --reason="the first went fine"
 brain authorization revoke <auth id> --reason="no longer worth it"
+brain authorization check  <change id|request id>   # is it authorized, and to do what?
 ```
 
-One verb for both grants: a `change_` id permits `apply` — the work may
-change the world — and a `req_` id permits `answer`, which may read,
-reason and reply with a Response and nothing else.
+One verb for the grants: a `change_` id permits `apply` — the work may
+change the world — a `req_` id permits `answer`, which may read, reason and
+reply with a Response and nothing else, and a `fanout_` id is the batch —
+one approval covering every member, `apply` or `answer` by the fan-out's
+kind.
+
+`authorization check` is the read-only gate the edge consults before it
+runs: it resolves the grant in force on a Change or Request — the member's
+own, or the batch grant on the Fanout it was fanned from — so a standalone
+and a fanned object answer alike.
 
 `--batch` caps how many Actors a fan-out has in flight at once; `1` offers
 one until it answers, so a first target that goes wrong stops the rest by

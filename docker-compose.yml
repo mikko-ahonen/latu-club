@@ -50,6 +50,12 @@ services:
     environment:
       - CLAUDE_CONFIG_DIR=/workspaces/claude
       - CLAUDE_CODE_DISABLE_TERMINAL_TITLE=1
+      # Privacy: no feedback surveys, telemetry, or error reporting from
+      # fleet Claude Code sessions (operator decision 2026-09-25).
+      - CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
+      - CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY=1
+      - DISABLE_TELEMETRY=1
+      - DISABLE_ERROR_REPORTING=1
       - APP_URL=http://web:8020
       - GIT_AUTHOR_NAME="Mikko Ahonen"
       - GIT_AUTHOR_EMAIL="mikko@jauzo.com"

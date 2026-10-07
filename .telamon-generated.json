@@ -1,5 +1,5 @@
 {
-  ".claude/skills/brain/SKILL.md": "c51a4116316f409808d23d5a7183364c553be555eabdb0ec4c25d4fb139fbe8e",
+  ".claude/skills/brain/SKILL.md": "2bd16d8de5bc033044ffa44aa8d2a35d1babcb15e874025b24655c33993888bb",
   ".claude/skills/close-issue/SKILL.md": "4f2362ab545baf98dc16855b4787e09d9f8e7eb2dc0404ad9d2105556ee75685",
   ".claude/skills/close-issue/scripts/close-issue": "259590db2261da92d745e2eca2354f2d03c997da652bcd915df6cb12277a64e4",
   ".claude/skills/create-bug/SKILL.md": "b064b7b8019f6f146b323cd33c57bc6a850d992dd7345316784c41715ba49738",
@@ -16,12 +16,13 @@
   "README.md": "2c5ed95bfab725fac47bc9d814f18300359c93b9bbad1037761f0ab09d0fd5da",
   "dev/screen-shell.sh": "03b60dd87e36f51c07bc802fbef277b62b27a15f292ad816bf7ddef7855d71b3",
   "dev/screenrc": "83b75c78aa3e9cc92bdbb2eb9ebb225536929df6ee4f979e7320708e52cc41ce",
-  "docker-compose.yml": "c68bdb09533ee3ce7ebc4b8cc914776951cbdc8e0fe1220e9ffc10ceeebce16b",
+  "docker-compose.yml": "c1aafd612c74b12c7264c8709def7d44208de5dda29d5e83f6c81a658c6224ac",
   "docs/claude/concept.md": "b2ddb1700c857cbfe9f1fc631d7be58fbf3cb924db8251f01dc964feb995f7ce",
   "docs/claude/design.md": "55edb62c73c4a5574090af52f2894820a0a3d55f3eaaf0a21608d9391f3c0367",
   "docs/claude/e2e.md": "25a8f2e4571888354c56d3ecbae38c8486cc9ae8fb677990f6323a28d9224c66",
   "docs/claude/implementation.md": "54ec1820bb4b1521711f3bfcc0477fe51caee4ef2cc68ac0db1fd2285940f4f7",
   "docs/claude/prototype.md": "773a1fa22ed15f5e2c2c36e66a9cfea1d79180c05a153948b476cb2274e47e2c",
   "docs/claude/testing.md": "3fb2b4b40a1bc79d45e3800324d450b8232e9e804fa84030e996f0b6a6fc986c",
+  "immunis.toml": "cd64b4f008cb18c4fa66dd82b0bfc54b99669f74145903b6afadfc6386988ed2",
   "release.py": "598f4618719a4cb5603c64a309c4168ce0d0b2a8ef567bad1c97b9a1673a3616"
 }
