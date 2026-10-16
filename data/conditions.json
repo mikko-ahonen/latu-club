@@ -1,11 +1,11 @@
 {
-  "updated_at": "2026-10-16T17:30:11.298429Z",
+  "updated_at": "2026-10-16T21:18:58.355034Z",
   "season": "2026-2027",
   "water": {
     "preferred": "sensor",
     "sensor": {
-      "temperature_c": 10.75,
-      "measured_at": "2026-10-16T20:14:40.519000+03:00",
+      "temperature_c": 10.81,
+      "measured_at": "2026-10-16T23:44:46.937000+03:00",
       "station": "Rastilan uimaranta",
       "depth_m": -0.2,
       "modelled": false,
@@ -13,22 +13,22 @@
       "source_url": "https://uiras.fvh.io/"
     },
     "model": {
-      "temperature_c": 11.4,
-      "measured_at": "2026-10-16T20:30",
+      "temperature_c": 11.5,
+      "measured_at": "2026-10-17T00:15",
       "station": "Vartiokylanlahti (mallinnettu)",
       "depth_m": null,
       "modelled": true,
       "source": "Open-Meteo Marine",
       "source_url": "https://open-meteo.com/en/docs/marine-weather-api"
     },
-    "difference_c": -0.65
+    "difference_c": -0.69
   },
   "air": {
-    "temperature_c": 12.8,
-    "wind_speed_ms": 5.9,
-    "wind_direction_deg": 214.0,
-    "humidity_pct": 92.0,
-    "measured_at": "2026-10-16T17:20:00Z",
+    "temperature_c": 12.1,
+    "wind_speed_ms": 5.7,
+    "wind_direction_deg": 209.0,
+    "humidity_pct": 95.0,
+    "measured_at": "2026-10-16T21:10:00Z",
     "station": "Helsinki Kumpula",
     "source": "Ilmatieteen laitos, avoin data",
     "source_url": "https://www.ilmatieteenlaitos.fi/avoin-data"
