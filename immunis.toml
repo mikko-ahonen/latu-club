@@ -14,7 +14,7 @@ private_distributions = [
   "brain-cli",
   "brain-runner",
   "deontic-engine",
-  "django-action-registry",
+  "django-basemap",
   "django-booking",
   "django-discussions",
   "django-entitlements",

@@ -5,7 +5,15 @@ services:
   web:
     stdin_open: true
     tty: true
-    restart: always
+    # on-failure:5, not always. A dev container that cannot start (stale
+    # image vs requirements.txt is the usual cause) should STOP after a few
+    # tries and sit at Exited(1) where `docker compose ps` and infra's
+    # `health` show it — not loop forever: gigbuildr-web-1 reached 23,000
+    # restarts on pythagoras before anyone looked (2026-10-22). Also means a
+    # clean exit stays down and nothing auto-boots after a reboot; `tl work`
+    # brings the stack up anyway. Prod stays `unless-stopped` — a transient
+    # outage must not leave prod down, and prod restarts are alerted.
+    restart: on-failure:5
     build:
       context: .
       dockerfile: Dockerfile

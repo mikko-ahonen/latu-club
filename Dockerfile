@@ -74,7 +74,13 @@ RUN curl -fsSL https://claude.ai/install.sh | bash \
     && echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$BASH_ENV"
 
 # Git configuration
-RUN echo 'git config --global core.sshCommand "ssh -i /home/dev/.ssh/id_ed25519"' >> "$BASH_ENV" \
+# Guarded on the key existing: $BASH_ENV is sourced by every non-interactive
+# bash, including `RUN` steps. The key is bind-mounted at RUNTIME, so at build
+# time an unguarded hint makes ssh warn "Identity file ... not accessible" on
+# every git+ssh install before falling back to the forwarded build agent --
+# which is what should authenticate the build. `if` rather than `&&` so a
+# missing key still leaves the sourced file's exit status 0.
+RUN echo 'if [ -f /home/dev/.ssh/id_ed25519 ]; then git config --global core.sshCommand "ssh -i /home/dev/.ssh/id_ed25519"; fi' >> "$BASH_ENV" \
     && echo 'git config --global --add safe.directory /src' >> "$BASH_ENV"
 
 # ------------------------------------------------------------------------------

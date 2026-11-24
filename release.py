@@ -8,23 +8,22 @@ import subprocess
 import sys
 
 
-FLY_APP = "latu-club"
-FLY_REGION = "ams"
-
-
-
-def run(cmd, check=True):
-    print(f"$ {cmd}")
-    return subprocess.run(cmd, shell=True, check=check)
-
-
 def deploy(prod=False):
-    env = "production" if prod else "staging"
-    app = FLY_APP if prod else f"{FLY_APP}-staging"
+    """latu-club is not deployed from here.
 
-    print(f"Deploying latu-club to {env} ({app})...")
+    This file used to run `fly deploy --app latu-club` for every project,
+    because only the FLY_APP constant was gated on projects.yaml `fly:` and the
+    command was not. latu-club has no `fly:` block and no Fly app of that name
+    exists, so running it failed in a way that looked like a broken deploy
+    rather than a wrong tool.
+    """
+    sys.exit(
+        "release.py does not deploy latu-club.\n\n"
+        "  push to main — .github/workflows/pages.yml\n"
+        "  builds the site and publishes it to GitHub Pages. There is no\n"
+        "  platform side for a Pages site.\n"
+    )
 
-    run(f"fly deploy --app {app} --region {FLY_REGION}")
 
 
 def main():
